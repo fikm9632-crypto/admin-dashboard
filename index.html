@@ -21,17 +21,12 @@
     .dot.on{background:#22c55e}
   </style>
 </head>
+
 <body>
   <div class="top">
     <h2>لوحة البلاغات</h2>
     <button id="logoutBtn" style="width:auto;display:none;">تسجيل خروج</button>
   </div>
-
-  <!-- صوت التنبيه -->
-  <audio id="alertSound" preload="auto">
-    <!-- صوت تنبيه بسيط عبر Data URL (mp3) -->
-    <source src="data:audio/mpeg;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCAeAAACkAAABEVu2oAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" type="audio/mpeg">
-  </audio>
 
   <div id="authBox" class="card">
     <h3>تسجيل دخول الأدمن</h3>
@@ -56,7 +51,7 @@
       </div>
 
       <div class="row">
-        <button id="enableSoundBtn" class="pill" title="اضغط مرة واحدة للسماح بتشغيل الصوت">
+        <button id="enableSoundBtn" class="pill" title="اضغط مرة واحدة لتفعيل الصوت">
           تفعيل صوت التنبيه
         </button>
         <div class="pill muted">
@@ -86,12 +81,72 @@
     const refreshBtn = document.getElementById("refreshBtn");
     const filterStatus = document.getElementById("filterStatus");
 
-    const alertSound = document.getElementById("alertSound");
+    // ===== SOUND (Web Audio API) =====
     const enableSoundBtn = document.getElementById("enableSoundBtn");
     const soundDot = document.getElementById("soundDot");
     const soundState = document.getElementById("soundState");
 
     let soundEnabled = false;
+    let audioCtx = null;
+
+    function setSoundUI(on){
+      soundEnabled = on;
+      soundDot.classList.toggle("on", on);
+      soundState.textContent = on ? "الصوت مفعّل" : "الصوت غير مفعّل";
+      enableSoundBtn.textContent = on ? "الصوت مفعّل ✅" : "تفعيل صوت التنبيه";
+    }
+
+    function beep(durationMs = 200, frequency = 880, volume = 0.25) {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = "sine";
+      osc.frequency.value = frequency;
+      gain.gain.value = volume;
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start();
+      setTimeout(() => {
+        osc.stop();
+        osc.disconnect();
+        gain.disconnect();
+      }, durationMs);
+    }
+
+    async function tryPlayAlert(){
+      if (!soundEnabled) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === "suspended") await audioCtx.resume();
+
+        // تنبيه مزدوج لطيف
+        beep(180, 880, 0.25);
+        setTimeout(() => beep(180, 660, 0.25), 220);
+      } catch (e) {
+        setSoundUI(false);
+        alert("المتصفح منع تشغيل الصوت. اضغط تفعيل الصوت مرة أخرى.");
+      }
+    }
+
+    enableSoundBtn.addEventListener("click", async () => {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === "suspended") await audioCtx.resume();
+
+        // اختبار سريع
+        beep(150, 880, 0.25);
+        setSoundUI(true);
+      } catch (e) {
+        setSoundUI(false);
+        alert("فشل تفعيل الصوت. جرّب من Chrome/Edge وتأكد أن Sound = Allow للموقع.");
+      }
+    });
+
+    // ===== REALTIME / DATA =====
     let realtimeChannel = null;
     let lastSeenId = null; // لتجنب تنبيه عند أول تحميل
 
@@ -105,38 +160,6 @@
       const map = {new:"جديد", in_progress:"قيد المعالجة", closed:"مغلق"};
       return `<span class="badge">${map[s] ?? s}</span>`;
     }
-
-    function setSoundUI(on){
-      soundEnabled = on;
-      soundDot.classList.toggle("on", on);
-      soundState.textContent = on ? "الصوت مفعّل" : "الصوت غير مفعّل";
-      enableSoundBtn.textContent = on ? "الصوت مفعّل ✅" : "تفعيل صوت التنبيه";
-    }
-
-    async function tryPlayAlert(){
-      if (!soundEnabled) return;
-      try {
-        alertSound.currentTime = 0;
-        await alertSound.play();
-      } catch (e) {
-        // إذا المتصفح منع التشغيل، رجّع الحالة غير مفعّل
-        setSoundUI(false);
-      }
-    }
-
-    enableSoundBtn.addEventListener("click", async () => {
-      // “فتح” الصوت بتفاعل المستخدم
-      try {
-        alertSound.currentTime = 0;
-        await alertSound.play();
-        alertSound.pause();
-        setSoundUI(true);
-        alert("تم تفعيل الصوت ✅");
-      } catch (e) {
-        setSoundUI(false);
-        alert("المتصفح منع تشغيل الصوت. جرّب الضغط مرة أخرى أو اسمح بالصوت للصفحة.");
-      }
-    });
 
     async function renderReports() {
       reportsDiv.innerHTML = "جاري التحميل...";
@@ -215,7 +238,6 @@
     }
 
     function subscribeRealtime(){
-      // امنع تكرار الاشتراك
       if (realtimeChannel) return;
 
       realtimeChannel = supabase
@@ -224,17 +246,16 @@
           "postgres_changes",
           { event: "INSERT", schema: "public", table: "reports" },
           async (payload) => {
-            // وصل بلاغ جديد
             const newRow = payload.new;
-
-            // إذا أول مرة أو البلاغ هو آخر واحد معروف، تجاهل
             if (!newRow?.id) return;
+
+            // أول مرة (بعد تسجيل الدخول) لا تنبّه على القديم
             if (lastSeenId === null) {
               lastSeenId = newRow.id;
               return;
             }
 
-            // إذا البلاغ جديد فعلاً
+            // بلاغ جديد فعلاً
             if (newRow.id !== lastSeenId) {
               lastSeenId = newRow.id;
               await tryPlayAlert();
@@ -254,14 +275,13 @@
         reportsBox.style.display = "block";
         logoutBtn.style.display = "inline-block";
         await renderReports();
-        subscribeRealtime(); // ✅ تفعيل الاستماع للبلاغات الجديدة
+        subscribeRealtime();
       } else {
         authBox.style.display = "block";
         reportsBox.style.display = "none";
         logoutBtn.style.display = "none";
         lastSeenId = null;
 
-        // إيقاف الريلتايم عند تسجيل الخروج
         if (realtimeChannel) {
           supabase.removeChannel(realtimeChannel);
           realtimeChannel = null;
