@@ -16,6 +16,9 @@
     .muted{opacity:.75;font-size:13px}
     .top{display:flex;gap:10px;align-items:center;justify-content:space-between}
     .badge{display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.18);font-size:12px}
+    .pill{width:auto;display:inline-flex;align-items:center;gap:8px}
+    .dot{width:10px;height:10px;border-radius:999px;background:#888;display:inline-block}
+    .dot.on{background:#22c55e}
   </style>
 </head>
 <body>
@@ -23,6 +26,12 @@
     <h2>لوحة البلاغات</h2>
     <button id="logoutBtn" style="width:auto;display:none;">تسجيل خروج</button>
   </div>
+
+  <!-- صوت التنبيه -->
+  <audio id="alertSound" preload="auto">
+    <!-- صوت تنبيه بسيط عبر Data URL (mp3) -->
+    <source src="data:audio/mpeg;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCAeAAACkAAABEVu2oAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" type="audio/mpeg">
+  </audio>
 
   <div id="authBox" class="card">
     <h3>تسجيل دخول الأدمن</h3>
@@ -45,6 +54,17 @@
           <option value="closed">مغلق</option>
         </select>
       </div>
+
+      <div class="row">
+        <button id="enableSoundBtn" class="pill" title="اضغط مرة واحدة للسماح بتشغيل الصوت">
+          تفعيل صوت التنبيه
+        </button>
+        <div class="pill muted">
+          <span id="soundDot" class="dot"></span>
+          <span id="soundState">الصوت غير مفعّل</span>
+        </div>
+      </div>
+
       <div class="muted">ملاحظة: إذا لم تكن Admin، لن ترى شيئًا بسبب RLS.</div>
     </div>
 
@@ -66,6 +86,15 @@
     const refreshBtn = document.getElementById("refreshBtn");
     const filterStatus = document.getElementById("filterStatus");
 
+    const alertSound = document.getElementById("alertSound");
+    const enableSoundBtn = document.getElementById("enableSoundBtn");
+    const soundDot = document.getElementById("soundDot");
+    const soundState = document.getElementById("soundState");
+
+    let soundEnabled = false;
+    let realtimeChannel = null;
+    let lastSeenId = null; // لتجنب تنبيه عند أول تحميل
+
     function escapeHtml(str){
       return String(str ?? "").replace(/[&<>"']/g, m => ({
         "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
@@ -76,6 +105,38 @@
       const map = {new:"جديد", in_progress:"قيد المعالجة", closed:"مغلق"};
       return `<span class="badge">${map[s] ?? s}</span>`;
     }
+
+    function setSoundUI(on){
+      soundEnabled = on;
+      soundDot.classList.toggle("on", on);
+      soundState.textContent = on ? "الصوت مفعّل" : "الصوت غير مفعّل";
+      enableSoundBtn.textContent = on ? "الصوت مفعّل ✅" : "تفعيل صوت التنبيه";
+    }
+
+    async function tryPlayAlert(){
+      if (!soundEnabled) return;
+      try {
+        alertSound.currentTime = 0;
+        await alertSound.play();
+      } catch (e) {
+        // إذا المتصفح منع التشغيل، رجّع الحالة غير مفعّل
+        setSoundUI(false);
+      }
+    }
+
+    enableSoundBtn.addEventListener("click", async () => {
+      // “فتح” الصوت بتفاعل المستخدم
+      try {
+        alertSound.currentTime = 0;
+        await alertSound.play();
+        alertSound.pause();
+        setSoundUI(true);
+        alert("تم تفعيل الصوت ✅");
+      } catch (e) {
+        setSoundUI(false);
+        alert("المتصفح منع تشغيل الصوت. جرّب الضغط مرة أخرى أو اسمح بالصوت للصفحة.");
+      }
+    });
 
     async function renderReports() {
       reportsDiv.innerHTML = "جاري التحميل...";
@@ -94,6 +155,9 @@
         reportsDiv.innerHTML = `<div class="card">لا يوجد بلاغات</div>`;
         return;
       }
+
+      // خزّن أحدث id عند أول تحميل حتى لا يعمل تنبيه على البلاغات القديمة
+      if (lastSeenId === null) lastSeenId = data[0]?.id ?? null;
 
       reportsDiv.innerHTML = data.map(r => `
         <div class="card">
@@ -150,6 +214,37 @@
       });
     }
 
+    function subscribeRealtime(){
+      // امنع تكرار الاشتراك
+      if (realtimeChannel) return;
+
+      realtimeChannel = supabase
+        .channel("reports-inserts")
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "reports" },
+          async (payload) => {
+            // وصل بلاغ جديد
+            const newRow = payload.new;
+
+            // إذا أول مرة أو البلاغ هو آخر واحد معروف، تجاهل
+            if (!newRow?.id) return;
+            if (lastSeenId === null) {
+              lastSeenId = newRow.id;
+              return;
+            }
+
+            // إذا البلاغ جديد فعلاً
+            if (newRow.id !== lastSeenId) {
+              lastSeenId = newRow.id;
+              await tryPlayAlert();
+              await renderReports();
+            }
+          }
+        )
+        .subscribe();
+    }
+
     async function checkSession() {
       const { data } = await supabase.auth.getSession();
       const session = data?.session;
@@ -159,10 +254,18 @@
         reportsBox.style.display = "block";
         logoutBtn.style.display = "inline-block";
         await renderReports();
+        subscribeRealtime(); // ✅ تفعيل الاستماع للبلاغات الجديدة
       } else {
         authBox.style.display = "block";
         reportsBox.style.display = "none";
         logoutBtn.style.display = "none";
+        lastSeenId = null;
+
+        // إيقاف الريلتايم عند تسجيل الخروج
+        if (realtimeChannel) {
+          supabase.removeChannel(realtimeChannel);
+          realtimeChannel = null;
+        }
       }
     }
 
@@ -184,6 +287,7 @@
     refreshBtn.addEventListener("click", renderReports);
     filterStatus.addEventListener("change", renderReports);
 
+    setSoundUI(false);
     await checkSession();
   </script>
 </body>
