@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>لوحة البلاغات - Admin</title>
+  <style>
+    body{font-family:system-ui;margin:20px auto;max-width:1000px;padding:0 12px;background:#0b1220;color:#e5e7eb}
+    .card{border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:14px;margin:12px 0;background:rgba(255,255,255,.04)}
+    input,button,select,textarea{
+      padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.18);
+      width:100%;margin:6px 0;background:rgba(0,0,0,.25);color:#e5e7eb
+    }
+    button{cursor:pointer;background:rgba(0,229,255,.15);border:1px solid rgba(0,229,255,.45)}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .muted{opacity:.75;font-size:13px}
+    .top{display:flex;gap:10px;align-items:center;justify-content:space-between}
+    .badge{display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.18);font-size:12px}
+  </style>
+</head>
+<body>
+  <div class="top">
+    <h2>لوحة البلاغات</h2>
+    <button id="logoutBtn" style="width:auto;display:none;">تسجيل خروج</button>
+  </div>
+
+  <div id="authBox" class="card">
+    <h3>تسجيل دخول الأدمن</h3>
+    <div class="row">
+      <input id="email" type="email" placeholder="Email" />
+      <input id="password" type="password" placeholder="Password" />
+    </div>
+    <button id="loginBtn">دخول</button>
+    <div id="authMsg" class="muted"></div>
+  </div>
+
+  <div id="reportsBox" style="display:none;">
+    <div class="card">
+      <div class="row">
+        <button id="refreshBtn">تحديث</button>
+        <select id="filterStatus">
+          <option value="">كل الحالات</option>
+          <option value="new">جديد</option>
+          <option value="in_progress">قيد المعالجة</option>
+          <option value="closed">مغلق</option>
+        </select>
+      </div>
+      <div class="muted">ملاحظة: إذا لم تكن Admin، لن ترى شيئًا بسبب RLS.</div>
+    </div>
+
+    <div id="reports"></div>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+    const SUPABASE_URL = "https://qbduqcazeoyuqgixprhi.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFiZHVxY2F6ZW95dXFnaXhwcmhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzNDg2ODYsImV4cCI6MjA3NzkyNDY4Nn0.XQEEPPq_q96ahbDabSXEW_6kavaMO_xwJOmFKBKABdo";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const authBox = document.getElementById("authBox");
+    const reportsBox = document.getElementById("reportsBox");
+    const reportsDiv = document.getElementById("reports");
+    const authMsg = document.getElementById("authMsg");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const refreshBtn = document.getElementById("refreshBtn");
+    const filterStatus = document.getElementById("filterStatus");
+
+    function escapeHtml(str){
+      return String(str ?? "").replace(/[&<>"']/g, m => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+      }[m]));
+    }
+
+    function statusBadge(s){
+      const map = {new:"جديد", in_progress:"قيد المعالجة", closed:"مغلق"};
+      return `<span class="badge">${map[s] ?? s}</span>`;
+    }
+
+    async function renderReports() {
+      reportsDiv.innerHTML = "جاري التحميل...";
+
+      let q = supabase.from("reports").select("*").order("created_at", {ascending:false});
+      if (filterStatus.value) q = q.eq("status", filterStatus.value);
+
+      const { data, error } = await q;
+
+      if (error) {
+        reportsDiv.innerHTML = `<div class="card">خطأ: ${escapeHtml(error.message)}</div>`;
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        reportsDiv.innerHTML = `<div class="card">لا يوجد بلاغات</div>`;
+        return;
+      }
+
+      reportsDiv.innerHTML = data.map(r => `
+        <div class="card">
+          <div><b>${escapeHtml(r.name)}</b> — <span class="muted">${escapeHtml(r.email)}</span></div>
+          <div class="muted">النوع: ${escapeHtml(r.type)} | الخطورة: ${escapeHtml(r.severity)} | ${statusBadge(r.status)}</div>
+          <p>${escapeHtml(r.description)}</p>
+
+          <div class="row">
+            <select data-id="${r.id}" class="status">
+              <option value="new" ${r.status==="new"?"selected":""}>جديد</option>
+              <option value="in_progress" ${r.status==="in_progress"?"selected":""}>قيد المعالجة</option>
+              <option value="closed" ${r.status==="closed"?"selected":""}>مغلق</option>
+            </select>
+            <button data-id="${r.id}" class="save">حفظ الحالة</button>
+          </div>
+
+          <textarea data-id="${r.id}" class="note" placeholder="ملاحظة للأدمن (اختياري)">${escapeHtml(r.admin_note)}</textarea>
+          <button data-id="${r.id}" class="saveNote">حفظ الملاحظة</button>
+
+          <div class="muted">تاريخ: ${r.created_at ? new Date(r.created_at).toLocaleString() : ""}</div>
+        </div>
+      `).join("");
+
+      document.querySelectorAll(".save").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-id");
+          const sel = document.querySelector(`select.status[data-id="${id}"]`);
+          const status = sel.value;
+
+          const { error } = await supabase.from("reports").update({
+            status,
+            updated_at: new Date().toISOString(),
+          }).eq("id", id);
+
+          if (error) alert("فشل التحديث: " + error.message);
+          else alert("تم تحديث الحالة ✅");
+        });
+      });
+
+      document.querySelectorAll(".saveNote").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-id");
+          const ta = document.querySelector(`textarea.note[data-id="${id}"]`);
+          const admin_note = ta.value;
+
+          const { error } = await supabase.from("reports").update({
+            admin_note,
+            updated_at: new Date().toISOString(),
+          }).eq("id", id);
+
+          if (error) alert("فشل حفظ الملاحظة: " + error.message);
+          else alert("تم حفظ الملاحظة ✅");
+        });
+      });
+    }
+
+    async function checkSession() {
+      const { data } = await supabase.auth.getSession();
+      const session = data?.session;
+
+      if (session) {
+        authBox.style.display = "none";
+        reportsBox.style.display = "block";
+        logoutBtn.style.display = "inline-block";
+        await renderReports();
+      } else {
+        authBox.style.display = "block";
+        reportsBox.style.display = "none";
+        logoutBtn.style.display = "none";
+      }
+    }
+
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      authMsg.textContent = "";
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) authMsg.textContent = "خطأ: " + error.message;
+      else await checkSession();
+    });
+
+    logoutBtn.addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      await checkSession();
+    });
+
+    refreshBtn.addEventListener("click", renderReports);
+    filterStatus.addEventListener("change", renderReports);
+
+    await checkSession();
+  </script>
+</body>
+</html>
