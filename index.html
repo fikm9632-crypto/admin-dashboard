@@ -1,609 +1,600 @@
- (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
-diff --git a/index.html b/index.html
-index 967b0211bc7272c8d4567b37f30657b1b119e741..bc1cf9df8e48e5c015b4b57d931359067c4ea451 100644
---- a/index.html
-+++ b/index.html
-@@ -1,314 +1,470 @@
- <!doctype html>
- <html lang="ar" dir="rtl">
- <head>
-   <meta charset="utf-8" />
-   <meta name="viewport" content="width=device-width,initial-scale=1" />
-   <title>لوحة البلاغات - Admin</title>
-   <style>
--    body{font-family:system-ui;margin:20px auto;max-width:1000px;padding:0 12px;background:#0b1220;color:#e5e7eb}
--    .card{border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:14px;margin:12px 0;background:rgba(255,255,255,.04)}
--    input,button,select,textarea{
--      padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.18);
--      width:100%;margin:6px 0;background:rgba(0,0,0,.25);color:#e5e7eb
-+    :root{
-+      --bg:#070b1b;
-+      --panel:#111a32;
-+      --panel-2:#1b2746;
-+      --line:rgba(193, 209, 255, .2);
-+      --text:#e8ecff;
-+      --muted:#afbadf;
-+      --primary:#24d2ff;
-+      --success:#23c373;
-+      --danger:#ef4c63;
-+      --warning:#e9b949;
-+      --radius:18px;
-+      --shadow:0 20px 50px rgba(0,0,0,.35);
-+    }
-+
-+    *{box-sizing:border-box}
-+
-+    body{
-+      margin:0;
-+      min-height:100vh;
-+      color:var(--text);
-+      font-family: "Inter", "Segoe UI", Tahoma, sans-serif;
-+      background:
-+        radial-gradient(900px 500px at 8% 0%, rgba(40,170,140,.23), transparent),
-+        radial-gradient(900px 600px at 75% 20%, rgba(0,110,255,.2), transparent),
-+        linear-gradient(180deg, #081122 0%, #070b1b 100%);
-+    }
-+
-+    .container{width:min(1220px,94vw);margin-inline:auto;padding:24px 0 34px}
-+
-+    .header{
-+      display:flex;align-items:center;justify-content:space-between;gap:16px;
-+      border:1px solid var(--line);
-+      background:linear-gradient(110deg, rgba(16,33,51,.92), rgba(10,20,46,.84));
-+      border-radius:22px;
-+      padding:16px 20px;
-+      box-shadow:var(--shadow);
-+      margin-bottom:20px;
-+    }
-+
-+    .brand{display:flex;align-items:center;gap:14px}
-+    .logo{width:48px;height:48px;border-radius:14px;background:linear-gradient(180deg,#2bd47d,#14b1d6)}
-+    .brand h1{font-size:34px;margin:0;font-weight:800;letter-spacing:.2px}
-+    .brand p{margin:2px 0 0;color:var(--muted)}
-+
-+    .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-+
-+    button,select,input,textarea{
-+      border:1px solid var(--line);
-+      background:rgba(190,206,255,.08);
-+      color:var(--text);
-+      border-radius:14px;
-+      padding:12px 14px;
-+      font:inherit;
-+    }
-+
-+    button{cursor:pointer;transition:.2s transform,.2s background,.2s border-color}
-+    button:hover{transform:translateY(-1px)}
-+    .btn{min-width:110px}
-+    .btn-outline{background:rgba(15,23,40,.25)}
-+    .btn-sound.active,.btn-success{background:rgba(35,195,115,.2);border-color:rgba(35,195,115,.65)}
-+    .btn-danger{background:rgba(239,76,99,.12);border-color:rgba(239,76,99,.4)}
-+
-+    .auth-wrap{min-height:calc(100vh - 160px);display:grid;place-items:center}
-+    .auth-card{
-+      width:min(540px,95vw);
-+      border:1px solid var(--line);
-+      border-radius:26px;
-+      background:linear-gradient(160deg, rgba(24,34,64,.95), rgba(17,18,30,.95));
-+      box-shadow:var(--shadow);
-+      padding:24px;
-+    }
-+
-+    .auth-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
-+    .auth-head .logo{width:56px;height:56px}
-+    .auth-head h2{margin:0;font-size:36px}
-+    .auth-head p{margin:0;color:var(--muted)}
-+    .field{margin:10px 0}
-+    .field label{display:block;margin-bottom:8px;color:#dbe5ff}
-+    .field input{width:100%;font-size:18px}
-+    .auth-card .submit{width:100%;margin-top:10px;background:rgba(35,195,115,.22);border-color:rgba(35,195,115,.58);font-weight:700}
-+
-+    .muted{color:var(--muted);font-size:14px}
-+    #reportsBox{display:none}
-+
-+    .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:14px}
-+    .stat{
-+      border:1px solid var(--line);
-+      border-radius:var(--radius);
-+      padding:16px;
-+      background:linear-gradient(120deg, rgba(21,53,63,.7), rgba(34,45,74,.68));
-+    }
-+    .stat h4{margin:0 0 10px;font-size:20px;color:#cee0ff}
-+    .stat .num{font-size:40px;font-weight:800;margin-bottom:4px;line-height:1}
-+
-+    .controls{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin-bottom:14px}
-+    .controls input{width:100%}
-+
-+    #reports{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
-+
-+    .card{
-+      border:1px solid var(--line);
-+      border-radius:22px;
-+      padding:16px;
-+      background:linear-gradient(120deg, rgba(26,39,68,.92), rgba(17,24,44,.95));
-+    }
-+
-+    .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px}
-+    .card-title{margin:0;font-size:23px}
-+    .badges{display:flex;gap:8px;flex-wrap:wrap}
-+    .badge{display:inline-block;padding:5px 10px;border-radius:999px;border:1px solid var(--line);font-size:14px}
-+    .badge.new{border-color:rgba(0,210,255,.55);background:rgba(0,210,255,.1)}
-+    .badge.in_progress{border-color:rgba(233,185,73,.55);background:rgba(233,185,73,.12)}
-+    .badge.closed{border-color:rgba(35,195,115,.6);background:rgba(35,195,115,.12)}
-+    .sev-low{border-color:rgba(35,195,115,.65)!important;color:#9ef7c8}
-+    .sev-med{border-color:rgba(233,185,73,.65)!important;color:#ffd98f}
-+    .sev-high{border-color:rgba(239,76,99,.65)!important;color:#ff9baa}
-+
-+    .meta{margin:8px 0 12px;padding:0;list-style:none;color:#d2dcfd}
-+    .meta li{margin-bottom:6px;display:flex;gap:8px}
-+    .description{background:rgba(190,206,255,.08);padding:12px;border-radius:14px;border:1px solid var(--line);margin:10px 0;min-height:72px}
-+    .actions-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
-+    .actions-grid button,.actions-grid select,.actions-grid textarea{width:100%;margin:0}
-+    .actions-grid .full{grid-column:1 / -1}
-+
-+    @media (max-width:1100px){
-+      .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
-+      #reports{grid-template-columns:repeat(2,minmax(0,1fr))}
-+    }
-+
-+    @media (max-width:760px){
-+      .header{flex-direction:column;align-items:flex-start}
-+      .controls{grid-template-columns:1fr}
-+      #reports,.stats{grid-template-columns:1fr}
-+      .brand h1,.auth-head h2{font-size:28px}
-     }
--    button{cursor:pointer;background:rgba(0,229,255,.15);border:1px solid rgba(0,229,255,.45)}
--    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
--    .muted{opacity:.75;font-size:13px}
--    .top{display:flex;gap:10px;align-items:center;justify-content:space-between}
--    .badge{display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.18);font-size:12px}
--    .pill{width:auto;display:inline-flex;align-items:center;gap:8px}
--    .dot{width:10px;height:10px;border-radius:999px;background:#888;display:inline-block}
--    .dot.on{background:#22c55e}
-   </style>
- </head>
- 
- <body>
--  <div class="top">
--    <h2>لوحة البلاغات</h2>
--    <button id="logoutBtn" style="width:auto;display:none;">تسجيل خروج</button>
--  </div>
-+  <div class="container">
-+    <div class="header">
-+      <div class="brand">
-+        <div class="logo" aria-hidden="true"></div>
-+        <div>
-+          <h1>Admin Dashboard</h1>
-+          <p>Reports Center • Live</p>
-+        </div>
-+      </div>
-+      <div class="actions">
-+        <button id="enableSoundBtn" class="btn btn-outline">Sound: Off</button>
-+        <button id="refreshBtn" class="btn btn-outline">Refresh</button>
-+        <button id="logoutBtn" class="btn btn-danger" style="display:none;">Logout</button>
-+      </div>
-+    </div>
- 
--  <div id="authBox" class="card">
--    <h3>تسجيل دخول الأدمن</h3>
--    <div class="row">
--      <input id="email" type="email" placeholder="Email" />
--      <input id="password" type="password" placeholder="Password" />
-+    <div id="authBox" class="auth-wrap">
-+      <div class="auth-card">
-+        <div class="auth-head">
-+          <div class="logo" aria-hidden="true"></div>
-+          <div>
-+            <h2>Admin Portal</h2>
-+            <p>Sign in to manage reports</p>
-+          </div>
-+        </div>
-+        <div class="field">
-+          <label for="email">Email</label>
-+          <input id="email" type="email" placeholder="admin@test.com" />
-+        </div>
-+        <div class="field">
-+          <label for="password">Password</label>
-+          <input id="password" type="password" placeholder="••••••••" />
-+        </div>
-+        <button id="loginBtn" class="submit">Sign in</button>
-+        <div id="authMsg" class="muted" style="margin-top:8px;"></div>
-+      </div>
-     </div>
--    <button id="loginBtn">دخول</button>
--    <div id="authMsg" class="muted"></div>
--  </div>
- 
--  <div id="reportsBox" style="display:none;">
--    <div class="card">
--      <div class="row">
--        <button id="refreshBtn">تحديث</button>
--        <select id="filterStatus">
--          <option value="">كل الحالات</option>
--          <option value="new">جديد</option>
--          <option value="in_progress">قيد المعالجة</option>
--          <option value="closed">مغلق</option>
--        </select>
-+    <div id="reportsBox">
-+      <div class="stats">
-+        <div class="stat"><h4>Total Reports</h4><div id="statTotal" class="num">0</div><div class="muted">All time</div></div>
-+        <div class="stat"><h4>New</h4><div id="statNew" class="num">0</div><div class="muted">Needs review</div></div>
-+        <div class="stat"><h4>In progress</h4><div id="statProgress" class="num">0</div><div class="muted">Under processing</div></div>
-+        <div class="stat"><h4>Latest</h4><div id="statLatest" class="num" style="font-size:20px">-</div><div class="muted">Most recent timestamp</div></div>
-       </div>
- 
--      <div class="row">
--        <button id="enableSoundBtn" class="pill" title="اضغط مرة واحدة لتفعيل الصوت">
--          تفعيل صوت التنبيه
--        </button>
--        <div class="pill muted">
--          <span id="soundDot" class="dot"></span>
--          <span id="soundState">الصوت غير مفعّل</span>
--        </div>
-+      <div class="controls">
-+        <input id="searchInput" type="search" placeholder="🔎 Search by name, email, type, description..." />
-+        <select id="filterStatus">
-+          <option value="">All statuses</option>
-+          <option value="new">New</option>
-+          <option value="in_progress">In progress</option>
-+          <option value="closed">Resolved</option>
-+        </select>
-+        <select id="sortOrder">
-+          <option value="desc">Newest first</option>
-+          <option value="asc">Oldest first</option>
-+        </select>
-       </div>
- 
--      <div class="muted">ملاحظة: إذا لم تكن Admin، لن ترى شيئًا بسبب RLS.</div>
-+      <div id="reports"></div>
-     </div>
--
--    <div id="reports"></div>
-   </div>
- 
-   <script type="module">
-     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
- 
-     const SUPABASE_URL = "https://qbduqcazeoyuqgixprhi.supabase.co";
-     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFiZHVxY2F6ZW95dXFnaXhwcmhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzNDg2ODYsImV4cCI6MjA3NzkyNDY4Nn0.XQEEPPq_q96ahbDabSXEW_6kavaMO_xwJOmFKBKABdo";
-     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
- 
-     const authBox = document.getElementById("authBox");
-     const reportsBox = document.getElementById("reportsBox");
-     const reportsDiv = document.getElementById("reports");
-     const authMsg = document.getElementById("authMsg");
-     const logoutBtn = document.getElementById("logoutBtn");
-     const refreshBtn = document.getElementById("refreshBtn");
-     const filterStatus = document.getElementById("filterStatus");
--
--    // ===== SOUND (Web Audio API) =====
-+    const sortOrder = document.getElementById("sortOrder");
-+    const searchInput = document.getElementById("searchInput");
-     const enableSoundBtn = document.getElementById("enableSoundBtn");
--    const soundDot = document.getElementById("soundDot");
--    const soundState = document.getElementById("soundState");
-+
-+    const statTotal = document.getElementById("statTotal");
-+    const statNew = document.getElementById("statNew");
-+    const statProgress = document.getElementById("statProgress");
-+    const statLatest = document.getElementById("statLatest");
- 
-     let soundEnabled = false;
-     let audioCtx = null;
-+    let realtimeChannel = null;
-+    let lastSeenId = null;
- 
-     function setSoundUI(on){
-       soundEnabled = on;
--      soundDot.classList.toggle("on", on);
--      soundState.textContent = on ? "الصوت مفعّل" : "الصوت غير مفعّل";
--      enableSoundBtn.textContent = on ? "الصوت مفعّل ✅" : "تفعيل صوت التنبيه";
-+      enableSoundBtn.textContent = on ? "Sound: On" : "Sound: Off";
-+      enableSoundBtn.classList.toggle("active", on);
-     }
- 
--    function beep(durationMs = 200, frequency = 880, volume = 0.25) {
-+    function beep(durationMs = 200, frequency = 880, volume = 0.2) {
-       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
--
-       const osc = audioCtx.createOscillator();
-       const gain = audioCtx.createGain();
--
-       osc.type = "sine";
-       osc.frequency.value = frequency;
-       gain.gain.value = volume;
--
-       osc.connect(gain);
-       gain.connect(audioCtx.destination);
--
-       osc.start();
-       setTimeout(() => {
-         osc.stop();
-         osc.disconnect();
-         gain.disconnect();
-       }, durationMs);
-     }
- 
-     async function tryPlayAlert(){
-       if (!soundEnabled) return;
-       try {
-         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-         if (audioCtx.state === "suspended") await audioCtx.resume();
--
--        // تنبيه مزدوج لطيف
--        beep(180, 880, 0.25);
--        setTimeout(() => beep(180, 660, 0.25), 220);
--      } catch (e) {
-+        beep(170, 880, 0.2);
-+        setTimeout(() => beep(170, 660, 0.2), 220);
-+      } catch {
-         setSoundUI(false);
--        alert("المتصفح منع تشغيل الصوت. اضغط تفعيل الصوت مرة أخرى.");
-       }
-     }
- 
--    enableSoundBtn.addEventListener("click", async () => {
--      try {
--        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
--        if (audioCtx.state === "suspended") await audioCtx.resume();
--
--        // اختبار سريع
--        beep(150, 880, 0.25);
--        setSoundUI(true);
--      } catch (e) {
--        setSoundUI(false);
--        alert("فشل تفعيل الصوت. جرّب من Chrome/Edge وتأكد أن Sound = Allow للموقع.");
--      }
--    });
--
--    // ===== REALTIME / DATA =====
--    let realtimeChannel = null;
--    let lastSeenId = null; // لتجنب تنبيه عند أول تحميل
--
-     function escapeHtml(str){
-       return String(str ?? "").replace(/[&<>"']/g, m => ({
-         "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-       }[m]));
-     }
- 
-     function statusBadge(s){
--      const map = {new:"جديد", in_progress:"قيد المعالجة", closed:"مغلق"};
--      return `<span class="badge">${map[s] ?? s}</span>`;
-+      const map = {new:"new", in_progress:"in progress", closed:"resolved"};
-+      return `<span class="badge ${s}">${map[s] ?? s}</span>`;
-     }
- 
--    async function renderReports() {
--      reportsDiv.innerHTML = "جاري التحميل...";
-+    function severityClass(sev){
-+      const normalized = String(sev || "").toLowerCase();
-+      if (["high", "critical", "عالي", "خطير"].includes(normalized)) return "sev-high";
-+      if (["medium", "med", "متوسط"].includes(normalized)) return "sev-med";
-+      return "sev-low";
-+    }
-+
-+    function updateStats(allReports){
-+      statTotal.textContent = allReports.length;
-+      statNew.textContent = allReports.filter(r => r.status === "new").length;
-+      statProgress.textContent = allReports.filter(r => r.status === "in_progress").length;
-+      statLatest.textContent = allReports[0]?.created_at ? new Date(allReports[0].created_at).toLocaleString() : "-";
-+    }
- 
--      let q = supabase.from("reports").select("*").order("created_at", {ascending:false});
--      if (filterStatus.value) q = q.eq("status", filterStatus.value);
-+    async function renderReports() {
-+      reportsDiv.innerHTML = '<div class="card">Loading...</div>';
- 
--      const { data, error } = await q;
-+      const order = sortOrder.value === "asc";
-+      const { data, error } = await supabase.from("reports").select("*").order("created_at", {ascending: order});
- 
-       if (error) {
--        reportsDiv.innerHTML = `<div class="card">خطأ: ${escapeHtml(error.message)}</div>`;
-+        reportsDiv.innerHTML = `<div class="card">Error: ${escapeHtml(error.message)}</div>`;
-         return;
-       }
- 
--      if (!data || data.length === 0) {
--        reportsDiv.innerHTML = `<div class="card">لا يوجد بلاغات</div>`;
-+      const allReports = data || [];
-+      updateStats(allReports);
-+
-+      if (lastSeenId === null) lastSeenId = allReports[0]?.id ?? null;
-+
-+      const q = searchInput.value.trim().toLowerCase();
-+      const filtered = allReports.filter(r => {
-+        const statusOk = !filterStatus.value || r.status === filterStatus.value;
-+        const haystack = [r.name, r.email, r.type, r.description, r.phone].join(" ").toLowerCase();
-+        const searchOk = !q || haystack.includes(q);
-+        return statusOk && searchOk;
-+      });
-+
-+      if (filtered.length === 0) {
-+        reportsDiv.innerHTML = '<div class="card">No reports found.</div>';
-         return;
-       }
- 
--      // خزّن أحدث id عند أول تحميل حتى لا يعمل تنبيه على البلاغات القديمة
--      if (lastSeenId === null) lastSeenId = data[0]?.id ?? null;
-+      reportsDiv.innerHTML = filtered.map(r => `
-+        <article class="card">
-+          <div class="card-head">
-+            <h3 class="card-title">${escapeHtml(r.type || "Unknown threat")}</h3>
-+            <div class="badges">
-+              ${statusBadge(r.status)}
-+              <span class="badge ${severityClass(r.severity)}">${escapeHtml(r.severity || "low")}</span>
-+            </div>
-+          </div>
-+
-+          <ul class="meta">
-+            <li><strong>Date:</strong> <span>${r.created_at ? new Date(r.created_at).toLocaleString() : ""}</span></li>
-+            <li><strong>Name:</strong> <span>${escapeHtml(r.name || "-")}</span></li>
-+            <li><strong>Email:</strong> <span>${escapeHtml(r.email || "-")}</span></li>
-+            <li><strong>Phone:</strong> <span>${escapeHtml(r.phone || "-")}</span></li>
-+          </ul>
- 
--      reportsDiv.innerHTML = data.map(r => `
--        <div class="card">
--          <div><b>${escapeHtml(r.name)}</b> — <span class="muted">${escapeHtml(r.email)}</span></div>
--          <div class="muted">النوع: ${escapeHtml(r.type)} | الخطورة: ${escapeHtml(r.severity)} | ${statusBadge(r.status)}</div>
--          <p>${escapeHtml(r.description)}</p>
-+          <div class="description">${escapeHtml(r.description || "")}</div>
- 
--          <div class="row">
-+          <div class="actions-grid">
-             <select data-id="${r.id}" class="status">
--              <option value="new" ${r.status==="new"?"selected":""}>جديد</option>
--              <option value="in_progress" ${r.status==="in_progress"?"selected":""}>قيد المعالجة</option>
--              <option value="closed" ${r.status==="closed"?"selected":""}>مغلق</option>
-+              <option value="new" ${r.status === "new" ? "selected" : ""}>New</option>
-+              <option value="in_progress" ${r.status === "in_progress" ? "selected" : ""}>In progress</option>
-+              <option value="closed" ${r.status === "closed" ? "selected" : ""}>Resolved</option>
-             </select>
--            <button data-id="${r.id}" class="save">حفظ الحالة</button>
--          </div>
--
--          <textarea data-id="${r.id}" class="note" placeholder="ملاحظة للأدمن (اختياري)">${escapeHtml(r.admin_note)}</textarea>
--          <button data-id="${r.id}" class="saveNote">حفظ الملاحظة</button>
-+            <button data-id="${r.id}" class="save btn-success">Save status</button>
- 
--          <div class="muted">تاريخ: ${r.created_at ? new Date(r.created_at).toLocaleString() : ""}</div>
--        </div>
-+            <textarea data-id="${r.id}" class="note full" rows="2" placeholder="Admin note (optional)">${escapeHtml(r.admin_note)}</textarea>
-+            <button data-id="${r.id}" class="saveNote full btn-outline">Save note</button>
-+          </div>
-+        </article>
-       `).join("");
- 
-       document.querySelectorAll(".save").forEach(btn => {
-         btn.addEventListener("click", async () => {
-           const id = btn.getAttribute("data-id");
-           const sel = document.querySelector(`select.status[data-id="${id}"]`);
-           const status = sel.value;
--
--          const { error } = await supabase.from("reports").update({
-+          const { error: updateError } = await supabase.from("reports").update({
-             status,
-             updated_at: new Date().toISOString(),
-           }).eq("id", id);
--
--          if (error) alert("فشل التحديث: " + error.message);
--          else alert("تم تحديث الحالة ✅");
-+          if (updateError) alert("Failed to update: " + updateError.message);
-+          else await renderReports();
-         });
-       });
- 
-       document.querySelectorAll(".saveNote").forEach(btn => {
-         btn.addEventListener("click", async () => {
-           const id = btn.getAttribute("data-id");
-           const ta = document.querySelector(`textarea.note[data-id="${id}"]`);
-           const admin_note = ta.value;
--
--          const { error } = await supabase.from("reports").update({
-+          const { error: noteError } = await supabase.from("reports").update({
-             admin_note,
-             updated_at: new Date().toISOString(),
-           }).eq("id", id);
--
--          if (error) alert("فشل حفظ الملاحظة: " + error.message);
--          else alert("تم حفظ الملاحظة ✅");
-+          if (noteError) alert("Failed to save note: " + noteError.message);
-+          else await renderReports();
-         });
-       });
-     }
- 
-     function subscribeRealtime(){
-       if (realtimeChannel) return;
--
-       realtimeChannel = supabase
-         .channel("reports-inserts")
-         .on(
-           "postgres_changes",
-           { event: "INSERT", schema: "public", table: "reports" },
-           async (payload) => {
-             const newRow = payload.new;
-             if (!newRow?.id) return;
--
--            // أول مرة (بعد تسجيل الدخول) لا تنبّه على القديم
-             if (lastSeenId === null) {
-               lastSeenId = newRow.id;
-               return;
-             }
--
--            // بلاغ جديد فعلاً
-             if (newRow.id !== lastSeenId) {
-               lastSeenId = newRow.id;
-               await tryPlayAlert();
-               await renderReports();
-             }
-           }
-         )
-         .subscribe();
-     }
- 
-     async function checkSession() {
-       const { data } = await supabase.auth.getSession();
-       const session = data?.session;
--
-       if (session) {
-         authBox.style.display = "none";
-         reportsBox.style.display = "block";
-         logoutBtn.style.display = "inline-block";
-         await renderReports();
-         subscribeRealtime();
-       } else {
--        authBox.style.display = "block";
-+        authBox.style.display = "grid";
-         reportsBox.style.display = "none";
-         logoutBtn.style.display = "none";
-         lastSeenId = null;
--
-         if (realtimeChannel) {
-           supabase.removeChannel(realtimeChannel);
-           realtimeChannel = null;
-         }
-       }
-     }
- 
-     document.getElementById("loginBtn").addEventListener("click", async () => {
-       authMsg.textContent = "";
-       const email = document.getElementById("email").value.trim();
-       const password = document.getElementById("password").value;
--
-       const { error } = await supabase.auth.signInWithPassword({ email, password });
--      if (error) authMsg.textContent = "خطأ: " + error.message;
-+      if (error) authMsg.textContent = "Error: " + error.message;
-       else await checkSession();
-     });
- 
-     logoutBtn.addEventListener("click", async () => {
-       await supabase.auth.signOut();
-       await checkSession();
-     });
- 
-+    enableSoundBtn.addEventListener("click", async () => {
-+      try {
-+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-+        if (audioCtx.state === "suspended") await audioCtx.resume();
-+        beep(150, 840, 0.2);
-+        setSoundUI(!soundEnabled);
-+      } catch {
-+        setSoundUI(false);
-+      }
-+    });
-+
-     refreshBtn.addEventListener("click", renderReports);
-     filterStatus.addEventListener("change", renderReports);
-+    sortOrder.addEventListener("change", renderReports);
-+    searchInput.addEventListener("input", renderReports);
- 
-     setSoundUI(false);
-     await checkSession();
-   </script>
- </body>
- </html>
- 
-EOF
-)
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>لوحة البلاغات - Admin</title>
+  <style>
+    body{font-family:system-ui;margin:20px auto;max-width:1000px;padding:0 12px;background:#0b1220;color:#e5e7eb}
+    .card{border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:14px;margin:12px 0;background:rgba(255,255,255,.04)}
+    input,button,select,textarea{
+      padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.18);
+      width:100%;margin:6px 0;background:rgba(0,0,0,.25);color:#e5e7eb
+    :root{
+      --bg:#070b1b;
+      --panel:#111a32;
+      --panel-2:#1b2746;
+      --line:rgba(193, 209, 255, .2);
+      --text:#e8ecff;
+      --muted:#afbadf;
+      --primary:#24d2ff;
+      --success:#23c373;
+      --danger:#ef4c63;
+      --warning:#e9b949;
+      --radius:18px;
+      --shadow:0 20px 50px rgba(0,0,0,.35);
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      min-height:100vh;
+      color:var(--text);
+      font-family: "Inter", "Segoe UI", Tahoma, sans-serif;
+      background:
+        radial-gradient(900px 500px at 8% 0%, rgba(40,170,140,.23), transparent),
+        radial-gradient(900px 600px at 75% 20%, rgba(0,110,255,.2), transparent),
+        linear-gradient(180deg, #081122 0%, #070b1b 100%);
+    }
+
+    .container{width:min(1220px,94vw);margin-inline:auto;padding:24px 0 34px}
+
+    .header{
+      display:flex;align-items:center;justify-content:space-between;gap:16px;
+      border:1px solid var(--line);
+      background:linear-gradient(110deg, rgba(16,33,51,.92), rgba(10,20,46,.84));
+      border-radius:22px;
+      padding:16px 20px;
+      box-shadow:var(--shadow);
+      margin-bottom:20px;
+    }
+
+    .brand{display:flex;align-items:center;gap:14px}
+    .logo{width:48px;height:48px;border-radius:14px;background:linear-gradient(180deg,#2bd47d,#14b1d6)}
+    .brand h1{font-size:34px;margin:0;font-weight:800;letter-spacing:.2px}
+    .brand p{margin:2px 0 0;color:var(--muted)}
+
+    .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+    button,select,input,textarea{
+      border:1px solid var(--line);
+      background:rgba(190,206,255,.08);
+      color:var(--text);
+      border-radius:14px;
+      padding:12px 14px;
+      font:inherit;
+    }
+
+    button{cursor:pointer;transition:.2s transform,.2s background,.2s border-color}
+    button:hover{transform:translateY(-1px)}
+    .btn{min-width:110px}
+    .btn-outline{background:rgba(15,23,40,.25)}
+    .btn-sound.active,.btn-success{background:rgba(35,195,115,.2);border-color:rgba(35,195,115,.65)}
+    .btn-danger{background:rgba(239,76,99,.12);border-color:rgba(239,76,99,.4)}
+
+    .auth-wrap{min-height:calc(100vh - 160px);display:grid;place-items:center}
+    .auth-card{
+      width:min(540px,95vw);
+      border:1px solid var(--line);
+      border-radius:26px;
+      background:linear-gradient(160deg, rgba(24,34,64,.95), rgba(17,18,30,.95));
+      box-shadow:var(--shadow);
+      padding:24px;
+    }
+
+    .auth-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+    .auth-head .logo{width:56px;height:56px}
+    .auth-head h2{margin:0;font-size:36px}
+    .auth-head p{margin:0;color:var(--muted)}
+    .field{margin:10px 0}
+    .field label{display:block;margin-bottom:8px;color:#dbe5ff}
+    .field input{width:100%;font-size:18px}
+    .auth-card .submit{width:100%;margin-top:10px;background:rgba(35,195,115,.22);border-color:rgba(35,195,115,.58);font-weight:700}
+
+    .muted{color:var(--muted);font-size:14px}
+    #reportsBox{display:none}
+
+    .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:14px}
+    .stat{
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:16px;
+      background:linear-gradient(120deg, rgba(21,53,63,.7), rgba(34,45,74,.68));
+    }
+    .stat h4{margin:0 0 10px;font-size:20px;color:#cee0ff}
+    .stat .num{font-size:40px;font-weight:800;margin-bottom:4px;line-height:1}
+
+    .controls{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin-bottom:14px}
+    .controls input{width:100%}
+
+    #reports{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+
+    .card{
+      border:1px solid var(--line);
+      border-radius:22px;
+      padding:16px;
+      background:linear-gradient(120deg, rgba(26,39,68,.92), rgba(17,24,44,.95));
+    }
+
+    .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px}
+    .card-title{margin:0;font-size:23px}
+    .badges{display:flex;gap:8px;flex-wrap:wrap}
+    .badge{display:inline-block;padding:5px 10px;border-radius:999px;border:1px solid var(--line);font-size:14px}
+    .badge.new{border-color:rgba(0,210,255,.55);background:rgba(0,210,255,.1)}
+    .badge.in_progress{border-color:rgba(233,185,73,.55);background:rgba(233,185,73,.12)}
+    .badge.closed{border-color:rgba(35,195,115,.6);background:rgba(35,195,115,.12)}
+    .sev-low{border-color:rgba(35,195,115,.65)!important;color:#9ef7c8}
+    .sev-med{border-color:rgba(233,185,73,.65)!important;color:#ffd98f}
+    .sev-high{border-color:rgba(239,76,99,.65)!important;color:#ff9baa}
+
+    .meta{margin:8px 0 12px;padding:0;list-style:none;color:#d2dcfd}
+    .meta li{margin-bottom:6px;display:flex;gap:8px}
+    .description{background:rgba(190,206,255,.08);padding:12px;border-radius:14px;border:1px solid var(--line);margin:10px 0;min-height:72px}
+    .actions-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+    .actions-grid button,.actions-grid select,.actions-grid textarea{width:100%;margin:0}
+    .actions-grid .full{grid-column:1 / -1}
+
+    @media (max-width:1100px){
+      .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+      #reports{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+
+    @media (max-width:760px){
+      .header{flex-direction:column;align-items:flex-start}
+      .controls{grid-template-columns:1fr}
+      #reports,.stats{grid-template-columns:1fr}
+      .brand h1,.auth-head h2{font-size:28px}
+    }
+    button{cursor:pointer;background:rgba(0,229,255,.15);border:1px solid rgba(0,229,255,.45)}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .muted{opacity:.75;font-size:13px}
+    .top{display:flex;gap:10px;align-items:center;justify-content:space-between}
+    .badge{display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.18);font-size:12px}
+    .pill{width:auto;display:inline-flex;align-items:center;gap:8px}
+    .dot{width:10px;height:10px;border-radius:999px;background:#888;display:inline-block}
+    .dot.on{background:#22c55e}
+  </style>
+</head>
+
+<body>
+  <div class="top">
+    <h2>لوحة البلاغات</h2>
+    <button id="logoutBtn" style="width:auto;display:none;">تسجيل خروج</button>
+  </div>
+  <div class="container">
+    <div class="header">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>Admin Dashboard</h1>
+          <p>Reports Center • Live</p>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="enableSoundBtn" class="btn btn-outline">Sound: Off</button>
+        <button id="refreshBtn" class="btn btn-outline">Refresh</button>
+        <button id="logoutBtn" class="btn btn-danger" style="display:none;">Logout</button>
+      </div>
+    </div>
+
+  <div id="authBox" class="card">
+    <h3>تسجيل دخول الأدمن</h3>
+    <div class="row">
+      <input id="email" type="email" placeholder="Email" />
+      <input id="password" type="password" placeholder="Password" />
+    <div id="authBox" class="auth-wrap">
+      <div class="auth-card">
+        <div class="auth-head">
+          <div class="logo" aria-hidden="true"></div>
+          <div>
+            <h2>Admin Portal</h2>
+            <p>Sign in to manage reports</p>
+          </div>
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" type="email" placeholder="admin@test.com" />
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" type="password" placeholder="••••••••" />
+        </div>
+        <button id="loginBtn" class="submit">Sign in</button>
+        <div id="authMsg" class="muted" style="margin-top:8px;"></div>
+      </div>
+    </div>
+    <button id="loginBtn">دخول</button>
+    <div id="authMsg" class="muted"></div>
+  </div>
+
+  <div id="reportsBox" style="display:none;">
+    <div class="card">
+      <div class="row">
+        <button id="refreshBtn">تحديث</button>
+        <select id="filterStatus">
+          <option value="">كل الحالات</option>
+          <option value="new">جديد</option>
+          <option value="in_progress">قيد المعالجة</option>
+          <option value="closed">مغلق</option>
+        </select>
+    <div id="reportsBox">
+      <div class="stats">
+        <div class="stat"><h4>Total Reports</h4><div id="statTotal" class="num">0</div><div class="muted">All time</div></div>
+        <div class="stat"><h4>New</h4><div id="statNew" class="num">0</div><div class="muted">Needs review</div></div>
+        <div class="stat"><h4>In progress</h4><div id="statProgress" class="num">0</div><div class="muted">Under processing</div></div>
+        <div class="stat"><h4>Latest</h4><div id="statLatest" class="num" style="font-size:20px">-</div><div class="muted">Most recent timestamp</div></div>
+      </div>
+
+      <div class="row">
+        <button id="enableSoundBtn" class="pill" title="اضغط مرة واحدة لتفعيل الصوت">
+          تفعيل صوت التنبيه
+        </button>
+        <div class="pill muted">
+          <span id="soundDot" class="dot"></span>
+          <span id="soundState">الصوت غير مفعّل</span>
+        </div>
+      <div class="controls">
+        <input id="searchInput" type="search" placeholder="🔎 Search by name, email, type, description..." />
+        <select id="filterStatus">
+          <option value="">All statuses</option>
+          <option value="new">New</option>
+          <option value="in_progress">In progress</option>
+          <option value="closed">Resolved</option>
+        </select>
+        <select id="sortOrder">
+          <option value="desc">Newest first</option>
+          <option value="asc">Oldest first</option>
+        </select>
+      </div>
+
+      <div class="muted">ملاحظة: إذا لم تكن Admin، لن ترى شيئًا بسبب RLS.</div>
+      <div id="reports"></div>
+    </div>
+
+    <div id="reports"></div>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+    const SUPABASE_URL = "https://qbduqcazeoyuqgixprhi.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFiZHVxY2F6ZW95dXFnaXhwcmhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzNDg2ODYsImV4cCI6MjA3NzkyNDY4Nn0.XQEEPPq_q96ahbDabSXEW_6kavaMO_xwJOmFKBKABdo";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const authBox = document.getElementById("authBox");
+    const reportsBox = document.getElementById("reportsBox");
+    const reportsDiv = document.getElementById("reports");
+    const authMsg = document.getElementById("authMsg");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const refreshBtn = document.getElementById("refreshBtn");
+    const filterStatus = document.getElementById("filterStatus");
+
+    // ===== SOUND (Web Audio API) =====
+    const sortOrder = document.getElementById("sortOrder");
+    const searchInput = document.getElementById("searchInput");
+    const enableSoundBtn = document.getElementById("enableSoundBtn");
+    const soundDot = document.getElementById("soundDot");
+    const soundState = document.getElementById("soundState");
+
+    const statTotal = document.getElementById("statTotal");
+    const statNew = document.getElementById("statNew");
+    const statProgress = document.getElementById("statProgress");
+    const statLatest = document.getElementById("statLatest");
+
+    let soundEnabled = false;
+    let audioCtx = null;
+    let realtimeChannel = null;
+    let lastSeenId = null;
+
+    function setSoundUI(on){
+      soundEnabled = on;
+      soundDot.classList.toggle("on", on);
+      soundState.textContent = on ? "الصوت مفعّل" : "الصوت غير مفعّل";
+      enableSoundBtn.textContent = on ? "الصوت مفعّل ✅" : "تفعيل صوت التنبيه";
+      enableSoundBtn.textContent = on ? "Sound: On" : "Sound: Off";
+      enableSoundBtn.classList.toggle("active", on);
+    }
+
+    function beep(durationMs = 200, frequency = 880, volume = 0.25) {
+    function beep(durationMs = 200, frequency = 880, volume = 0.2) {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = "sine";
+      osc.frequency.value = frequency;
+      gain.gain.value = volume;
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start();
+      setTimeout(() => {
+        osc.stop();
+        osc.disconnect();
+        gain.disconnect();
+      }, durationMs);
+    }
+
+    async function tryPlayAlert(){
+      if (!soundEnabled) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === "suspended") await audioCtx.resume();
+
+        // تنبيه مزدوج لطيف
+        beep(180, 880, 0.25);
+        setTimeout(() => beep(180, 660, 0.25), 220);
+      } catch (e) {
+        beep(170, 880, 0.2);
+        setTimeout(() => beep(170, 660, 0.2), 220);
+      } catch {
+        setSoundUI(false);
+        alert("المتصفح منع تشغيل الصوت. اضغط تفعيل الصوت مرة أخرى.");
+      }
+    }
+
+    enableSoundBtn.addEventListener("click", async () => {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === "suspended") await audioCtx.resume();
+
+        // اختبار سريع
+        beep(150, 880, 0.25);
+        setSoundUI(true);
+      } catch (e) {
+        setSoundUI(false);
+        alert("فشل تفعيل الصوت. جرّب من Chrome/Edge وتأكد أن Sound = Allow للموقع.");
+      }
+    });
+
+    // ===== REALTIME / DATA =====
+    let realtimeChannel = null;
+    let lastSeenId = null; // لتجنب تنبيه عند أول تحميل
+
+    function escapeHtml(str){
+      return String(str ?? "").replace(/[&<>"']/g, m => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+      }[m]));
+    }
+
+    function statusBadge(s){
+      const map = {new:"جديد", in_progress:"قيد المعالجة", closed:"مغلق"};
+      return `<span class="badge">${map[s] ?? s}</span>`;
+      const map = {new:"new", in_progress:"in progress", closed:"resolved"};
+      return `<span class="badge ${s}">${map[s] ?? s}</span>`;
+    }
+
+    async function renderReports() {
+      reportsDiv.innerHTML = "جاري التحميل...";
+    function severityClass(sev){
+      const normalized = String(sev || "").toLowerCase();
+      if (["high", "critical", "عالي", "خطير"].includes(normalized)) return "sev-high";
+      if (["medium", "med", "متوسط"].includes(normalized)) return "sev-med";
+      return "sev-low";
+    }
+
+    function updateStats(allReports){
+      statTotal.textContent = allReports.length;
+      statNew.textContent = allReports.filter(r => r.status === "new").length;
+      statProgress.textContent = allReports.filter(r => r.status === "in_progress").length;
+      statLatest.textContent = allReports[0]?.created_at ? new Date(allReports[0].created_at).toLocaleString() : "-";
+    }
+
+      let q = supabase.from("reports").select("*").order("created_at", {ascending:false});
+      if (filterStatus.value) q = q.eq("status", filterStatus.value);
+    async function renderReports() {
+      reportsDiv.innerHTML = '<div class="card">Loading...</div>';
+
+      const { data, error } = await q;
+      const order = sortOrder.value === "asc";
+      const { data, error } = await supabase.from("reports").select("*").order("created_at", {ascending: order});
+
+      if (error) {
+        reportsDiv.innerHTML = `<div class="card">خطأ: ${escapeHtml(error.message)}</div>`;
+        reportsDiv.innerHTML = `<div class="card">Error: ${escapeHtml(error.message)}</div>`;
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        reportsDiv.innerHTML = `<div class="card">لا يوجد بلاغات</div>`;
+      const allReports = data || [];
+      updateStats(allReports);
+
+      if (lastSeenId === null) lastSeenId = allReports[0]?.id ?? null;
+
+      const q = searchInput.value.trim().toLowerCase();
+      const filtered = allReports.filter(r => {
+        const statusOk = !filterStatus.value || r.status === filterStatus.value;
+        const haystack = [r.name, r.email, r.type, r.description, r.phone].join(" ").toLowerCase();
+        const searchOk = !q || haystack.includes(q);
+        return statusOk && searchOk;
+      });
+
+      if (filtered.length === 0) {
+        reportsDiv.innerHTML = '<div class="card">No reports found.</div>';
+        return;
+      }
+
+      // خزّن أحدث id عند أول تحميل حتى لا يعمل تنبيه على البلاغات القديمة
+      if (lastSeenId === null) lastSeenId = data[0]?.id ?? null;
+      reportsDiv.innerHTML = filtered.map(r => `
+        <article class="card">
+          <div class="card-head">
+            <h3 class="card-title">${escapeHtml(r.type || "Unknown threat")}</h3>
+            <div class="badges">
+              ${statusBadge(r.status)}
+              <span class="badge ${severityClass(r.severity)}">${escapeHtml(r.severity || "low")}</span>
+            </div>
+          </div>
+
+          <ul class="meta">
+            <li><strong>Date:</strong> <span>${r.created_at ? new Date(r.created_at).toLocaleString() : ""}</span></li>
+            <li><strong>Name:</strong> <span>${escapeHtml(r.name || "-")}</span></li>
+            <li><strong>Email:</strong> <span>${escapeHtml(r.email || "-")}</span></li>
+            <li><strong>Phone:</strong> <span>${escapeHtml(r.phone || "-")}</span></li>
+          </ul>
+
+      reportsDiv.innerHTML = data.map(r => `
+        <div class="card">
+          <div><b>${escapeHtml(r.name)}</b> — <span class="muted">${escapeHtml(r.email)}</span></div>
+          <div class="muted">النوع: ${escapeHtml(r.type)} | الخطورة: ${escapeHtml(r.severity)} | ${statusBadge(r.status)}</div>
+          <p>${escapeHtml(r.description)}</p>
+          <div class="description">${escapeHtml(r.description || "")}</div>
+
+          <div class="row">
+          <div class="actions-grid">
+            <select data-id="${r.id}" class="status">
+              <option value="new" ${r.status==="new"?"selected":""}>جديد</option>
+              <option value="in_progress" ${r.status==="in_progress"?"selected":""}>قيد المعالجة</option>
+              <option value="closed" ${r.status==="closed"?"selected":""}>مغلق</option>
+              <option value="new" ${r.status === "new" ? "selected" : ""}>New</option>
+              <option value="in_progress" ${r.status === "in_progress" ? "selected" : ""}>In progress</option>
+              <option value="closed" ${r.status === "closed" ? "selected" : ""}>Resolved</option>
+            </select>
+            <button data-id="${r.id}" class="save">حفظ الحالة</button>
+          </div>
+
+          <textarea data-id="${r.id}" class="note" placeholder="ملاحظة للأدمن (اختياري)">${escapeHtml(r.admin_note)}</textarea>
+          <button data-id="${r.id}" class="saveNote">حفظ الملاحظة</button>
+            <button data-id="${r.id}" class="save btn-success">Save status</button>
+
+          <div class="muted">تاريخ: ${r.created_at ? new Date(r.created_at).toLocaleString() : ""}</div>
+        </div>
+            <textarea data-id="${r.id}" class="note full" rows="2" placeholder="Admin note (optional)">${escapeHtml(r.admin_note)}</textarea>
+            <button data-id="${r.id}" class="saveNote full btn-outline">Save note</button>
+          </div>
+        </article>
+      `).join("");
+
+      document.querySelectorAll(".save").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-id");
+          const sel = document.querySelector(`select.status[data-id="${id}"]`);
+          const status = sel.value;
+
+          const { error } = await supabase.from("reports").update({
+          const { error: updateError } = await supabase.from("reports").update({
+            status,
+            updated_at: new Date().toISOString(),
+          }).eq("id", id);
+
+          if (error) alert("فشل التحديث: " + error.message);
+          else alert("تم تحديث الحالة ✅");
+          if (updateError) alert("Failed to update: " + updateError.message);
+          else await renderReports();
+        });
+      });
+
+      document.querySelectorAll(".saveNote").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-id");
+          const ta = document.querySelector(`textarea.note[data-id="${id}"]`);
+          const admin_note = ta.value;
+
+          const { error } = await supabase.from("reports").update({
+          const { error: noteError } = await supabase.from("reports").update({
+            admin_note,
+            updated_at: new Date().toISOString(),
+          }).eq("id", id);
+
+          if (error) alert("فشل حفظ الملاحظة: " + error.message);
+          else alert("تم حفظ الملاحظة ✅");
+          if (noteError) alert("Failed to save note: " + noteError.message);
+          else await renderReports();
+        });
+      });
+    }
+
+    function subscribeRealtime(){
+      if (realtimeChannel) return;
+
+      realtimeChannel = supabase
+        .channel("reports-inserts")
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "reports" },
+          async (payload) => {
+            const newRow = payload.new;
+            if (!newRow?.id) return;
+
+            // أول مرة (بعد تسجيل الدخول) لا تنبّه على القديم
+            if (lastSeenId === null) {
+              lastSeenId = newRow.id;
+              return;
+            }
+
+            // بلاغ جديد فعلاً
+            if (newRow.id !== lastSeenId) {
+              lastSeenId = newRow.id;
+              await tryPlayAlert();
+              await renderReports();
+            }
+          }
+        )
+        .subscribe();
+    }
+
+    async function checkSession() {
+      const { data } = await supabase.auth.getSession();
+      const session = data?.session;
+
+      if (session) {
+        authBox.style.display = "none";
+        reportsBox.style.display = "block";
+        logoutBtn.style.display = "inline-block";
+        await renderReports();
+        subscribeRealtime();
+      } else {
+        authBox.style.display = "block";
+        authBox.style.display = "grid";
+        reportsBox.style.display = "none";
+        logoutBtn.style.display = "none";
+        lastSeenId = null;
+
+        if (realtimeChannel) {
+          supabase.removeChannel(realtimeChannel);
+          realtimeChannel = null;
+        }
+      }
+    }
+
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      authMsg.textContent = "";
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) authMsg.textContent = "خطأ: " + error.message;
+      if (error) authMsg.textContent = "Error: " + error.message;
+      else await checkSession();
+    });
+
+    logoutBtn.addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      await checkSession();
+    });
+
+    enableSoundBtn.addEventListener("click", async () => {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === "suspended") await audioCtx.resume();
+        beep(150, 840, 0.2);
+        setSoundUI(!soundEnabled);
+      } catch {
+        setSoundUI(false);
+      }
+    });
+
+    refreshBtn.addEventListener("click", renderReports);
+    filterStatus.addEventListener("change", renderReports);
+    sortOrder.addEventListener("change", renderReports);
+    searchInput.addEventListener("input", renderReports);
+
+    setSoundUI(false);
+    await checkSession();
+  </script>
+</body>
+</html>
