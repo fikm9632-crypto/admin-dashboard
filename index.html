@@ -7,13 +7,15 @@
 
   <style>
     :root{
-      --bg0:#060b16;
-      --bg1:#071629;
-      --bg2:#081b2f;
-      --panel:rgba(255,255,255,.06);
+      --bgA:#050b15;
+      --bgB:#061021;
+      --bgC:#071a2e;
+
+      --panel:rgba(255,255,255,.07);
       --panel2:rgba(255,255,255,.04);
       --stroke:rgba(255,255,255,.14);
       --stroke2:rgba(255,255,255,.10);
+
       --text:#e7edf7;
       --muted:rgba(231,237,247,.70);
 
@@ -30,16 +32,31 @@
 
     *{box-sizing:border-box}
     html,body{height:100%}
+
     body{
       margin:0;
       color:var(--text);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
       background:
-        radial-gradient(1200px 600px at 12% 0%, rgba(16,185,129,.18), transparent 55%),
-        radial-gradient(900px 600px at 60% 10%, rgba(34,211,238,.12), transparent 55%),
-        radial-gradient(900px 600px at 50% 110%, rgba(245,158,11,.10), transparent 55%),
-        linear-gradient(180deg, var(--bg2), var(--bg0));
+        radial-gradient(900px 650px at 15% 0%, rgba(34,211,238,.15), transparent 60%),
+        radial-gradient(900px 650px at 85% 10%, rgba(16,185,129,.16), transparent 62%),
+        radial-gradient(900px 650px at 50% 110%, rgba(251,191,36,.10), transparent 62%),
+        linear-gradient(180deg, var(--bgC), var(--bgA));
       overflow-x:hidden;
+    }
+
+    /* Wave overlay */
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      opacity:.22;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='600' viewBox='0 0 1200 600'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.18' stroke-width='2'%3E%3Cpath d='M0 120 C 150 60 300 180 450 120 S 750 180 900 120 S 1050 60 1200 120'/%3E%3Cpath d='M0 240 C 150 180 300 300 450 240 S 750 300 900 240 S 1050 180 1200 240'/%3E%3Cpath d='M0 360 C 150 300 300 420 450 360 S 750 420 900 360 S 1050 300 1200 360'/%3E%3C/g%3E%3C/svg%3E");
+      background-size: 1200px 600px;
+      background-repeat: repeat;
+      mix-blend-mode: overlay;
+      filter: blur(.2px);
     }
 
     .shell{
@@ -49,7 +66,7 @@
     }
 
     .glass{
-      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.04));
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
       border: 1px solid var(--stroke);
       border-radius: var(--r-lg);
       box-shadow: var(--shadow);
@@ -95,14 +112,14 @@
       background: rgba(0,0,0,.18);
       color: var(--text);
       padding: 9px 14px;
-      font-weight: 600;
+      font-weight: 700;
       font-size: 13px;
       cursor:pointer;
       transition: transform .08s ease, border-color .12s ease, background .12s ease;
       user-select:none;
     }
     .btn:active{transform: translateY(1px)}
-    .btn:hover{border-color: rgba(255,255,255,.22); background: rgba(0,0,0,.22)}
+    .btn:hover{border-color: rgba(255,255,255,.24); background: rgba(0,0,0,.22)}
     .btn--primary{
       background: rgba(16,185,129,.20);
       border-color: rgba(16,185,129,.45);
@@ -113,14 +130,14 @@
       color: #ffd7de;
     }
     .btn--outline{
-      background: rgba(0,0,0,.10);
+      background: rgba(255,255,255,.06);
       border-color: rgba(255,255,255,.22);
     }
 
     .muted{color:var(--muted)}
     .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
 
-    /* LOGIN LAYOUT */
+    /* LOGIN */
     .centerWrap{
       min-height: calc(100vh - 56px);
       display:grid;
@@ -135,7 +152,7 @@
       display:flex;align-items:center;gap:12px;margin-bottom:18px;
     }
     .loginTitleWrap{line-height:1.15}
-    .loginTitle{font-size:22px;font-weight:800;margin:0}
+    .loginTitle{font-size:22px;font-weight:900;margin:0}
     .loginSub{margin:4px 0 0;color:var(--muted);font-size:13px}
 
     .field{margin-top:14px}
@@ -164,10 +181,10 @@
     .miniBtn{
       border-radius: var(--r-pill);
       border: 1px solid var(--stroke);
-      background: rgba(255,255,255,.05);
+      background: rgba(255,255,255,.06);
       color: var(--text);
       padding: 7px 10px;
-      font-weight: 700;
+      font-weight: 800;
       font-size: 12px;
       cursor:pointer;
     }
@@ -215,26 +232,37 @@
     .search{
       display:flex;align-items:center;gap:10px;
       border-radius: var(--r-pill);
-      border: 1px solid var(--stroke2);
-      background: rgba(0,0,0,.20);
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.07);
       padding: 10px 12px;
     }
     .search input{
       width:100%;
-      border:0;outline:none;background:transparent;color:var(--text);
+      border:0;outline:none;background:transparent;color:rgba(231,237,247,.95);
       font-size:14px;
+      font-weight:600;
     }
-    .search input::placeholder{color: rgba(231,237,247,.45)}
+    .search input::placeholder{color: rgba(231,237,247,.55)}
 
+    /* ✅ Make select text visible + options dark */
     select{
       width:100%;
       border-radius: var(--r-pill);
-      border: 1px solid var(--stroke2);
-      background: rgba(0,0,0,.20);
-      color: var(--text);
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.07);
+      color: rgba(231,237,247,.96);
       padding: 10px 12px;
       outline:none;
       appearance:none;
+      font-weight: 800;
+    }
+    select:focus{
+      box-shadow: 0 0 0 3px rgba(34,211,238,.22);
+      border-color: rgba(34,211,238,.45);
+    }
+    option{
+      background: #071629;
+      color: rgba(231,237,247,.96);
     }
 
     .grid{
@@ -263,11 +291,13 @@
       justify-content:space-between;
       gap: 10px;
     }
+
     .title{
       font-size: 18px;
       font-weight: 900;
       margin:0;
     }
+
     .meta{
       display:grid;
       gap: 6px;
@@ -277,6 +307,7 @@
     }
     .metaRow{display:flex;gap:8px;flex-wrap:wrap}
     .dot{opacity:.55}
+    .metaVal{color: rgba(231,237,247,.92); font-weight: 700}
 
     .pills{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
     .pill{
@@ -284,7 +315,7 @@
       border: 1px solid rgba(255,255,255,.20);
       padding: 6px 10px;
       font-size: 12px;
-      font-weight: 800;
+      font-weight: 900;
       background: rgba(0,0,0,.12);
       white-space:nowrap;
     }
@@ -296,7 +327,7 @@
     .pill--high{border-color: rgba(251,113,133,.55); background: rgba(251,113,133,.08)}
     .pill--dup{border-color: rgba(255,255,255,.22); background: rgba(255,255,255,.08); font-weight:900}
 
-    .descLabel{font-size:13px;color:rgba(231,237,247,.72);font-weight:800}
+    .descLabel{font-size:13px;color:rgba(231,237,247,.72);font-weight:900}
     .descBox{
       border-radius: var(--r-md);
       border: 1px solid rgba(34,211,238,.35);
@@ -316,10 +347,10 @@
     .btnSmall{
       border-radius: var(--r-pill);
       border: 1px solid var(--stroke);
-      background: rgba(255,255,255,.04);
+      background: rgba(255,255,255,.05);
       color: var(--text);
       padding: 9px 12px;
-      font-weight: 800;
+      font-weight: 900;
       font-size: 13px;
       cursor:pointer;
     }
@@ -457,7 +488,7 @@
 
       <div class="controls">
         <div class="search">
-          <div class="ico" aria-hidden="true" style="opacity:.7">
+          <div class="ico" aria-hidden="true" style="opacity:.75">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="rgba(231,237,247,.9)" stroke-width="2"/>
               <path d="M16.5 16.5 21 21" stroke="rgba(231,237,247,.9)" stroke-width="2" stroke-linecap="round"/>
@@ -514,7 +545,7 @@
     const soundBtn = document.getElementById("soundBtn");
     let soundOn = true;
 
-    // ===== SOUND (REAL) =====
+    // ===== SOUND =====
     let audioCtx = null;
     let lastSeenCreatedAt = null;
     let realtimeChannel = null;
@@ -526,13 +557,10 @@
 
     function playBeep(){
       if (!soundOn) return;
-
-      // لازم يكون فيه تفاعل من المستخدم أول مرة (مثل ضغط Sound أو Sign in)
       ensureAudioUnlocked();
 
       const o = audioCtx.createOscillator();
       const g = audioCtx.createGain();
-
       o.type = "sine";
       o.frequency.value = 880;
 
@@ -543,14 +571,12 @@
 
       o.connect(g);
       g.connect(audioCtx.destination);
-
       o.start(now);
       o.stop(now + 0.2);
     }
 
     function subscribeRealtime(){
       if (realtimeChannel) return;
-
       realtimeChannel = supabase
         .channel("reports-live")
         .on(
@@ -561,9 +587,7 @@
             await renderReports();
           }
         )
-        .subscribe((status) => {
-          // optional: console.log("Realtime status:", status);
-        });
+        .subscribe();
     }
 
     function unsubscribeRealtime(){
@@ -572,18 +596,19 @@
       realtimeChannel = null;
     }
 
-    // ========================
-
     function escapeHtml(str){
       return String(str ?? "").replace(/[&<>"']/g, m => ({
         "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
       }[m]));
     }
 
-    function fmtDate(iso){
-      try{
-        return iso ? new Date(iso).toLocaleString() : "—";
-      }catch{ return "—"; }
+    function fmtDateOnly(iso){
+      try { return iso ? new Date(iso).toLocaleDateString() : "—"; }
+      catch { return "—"; }
+    }
+    function fmtTimeOnly(iso){
+      try { return iso ? new Date(iso).toLocaleTimeString() : "—"; }
+      catch { return "—"; }
     }
 
     function statusInfo(s){
@@ -612,7 +637,6 @@
         0;
 
       if (Number.isFinite(n) && n > 0) return n;
-
       if (r.is_potential_duplicate || r.potential_dup || r.duplicate_of || r.dup_group_id) return 1;
       return 0;
     }
@@ -641,14 +665,18 @@
       const total = all.length;
       const newCount = all.filter(x => x.status === "new").length;
       const dupCount = all.reduce((acc, r) => acc + (inferDupCount(r) ? 1 : 0), 0);
-      const latest = all[0]?.created_at ? fmtDate(all[0].created_at) : "—";
 
       stTotal.textContent = total;
       stNew.textContent = newCount;
       stDup.textContent = dupCount;
-      stLatest.textContent = latest;
 
-      // Beep على Refresh لو فيه بلاغ أحدث من آخر مرة
+      if (all[0]?.created_at){
+        stLatest.textContent = `${fmtDateOnly(all[0].created_at)}, ${fmtTimeOnly(all[0].created_at)}`;
+      } else {
+        stLatest.textContent = "—";
+      }
+
+      // Beep on refresh if newer
       if (all[0]?.created_at) {
         if (lastSeenCreatedAt && new Date(all[0].created_at) > new Date(lastSeenCreatedAt)) {
           playBeep();
@@ -687,7 +715,10 @@
         const sev = severityInfo(r.severity);
         const dup = inferDupCount(r);
 
-        const title = r.threat_title || r.threat || " Threat";
+        // ✅ Remove "Unknown threat"
+        const rawTitle = (r.threat_title || r.threat || "").toString().trim();
+        const showTitle = rawTitle && rawTitle.toLowerCase() !== "unknown threat";
+
         const typeLabel = r.type || "—";
         const sevLabel = r.severity || "—";
 
@@ -695,12 +726,20 @@
           <div class="card" data-id="${escapeHtml(r.id)}">
             <div class="cardHead">
               <div>
-                <h3 class="title">${escapeHtml(title)}</h3>
+                ${showTitle ? `<h3 class="title" dir="auto">${escapeHtml(rawTitle)}</h3>` : ``}
+
                 <div class="meta">
-                  <div class="metaRow"><span class="dot">•</span> Date: <span class="mono">${escapeHtml(fmtDate(r.created_at))}</span></div>
-                  <div class="metaRow"><span class="dot">•</span> Name: <span>${escapeHtml(r.name)}</span></div>
-                  <div class="metaRow"><span class="dot">•</span> Email: <span class="mono">${escapeHtml(r.email)}</span></div>
-                  <div class="metaRow"><span class="dot">•</span> Phone: <span class="mono">${escapeHtml(r.phone)}</span></div>
+                  <!-- ✅ Date then Time below -->
+                  <div class="metaRow"><span class="dot">•</span> Date: <span class="metaVal" dir="auto">${escapeHtml(fmtDateOnly(r.created_at))}</span></div>
+                  <div class="metaRow"><span class="dot">•</span> Time: <span class="metaVal" dir="auto">${escapeHtml(fmtTimeOnly(r.created_at))}</span></div>
+
+                  <!-- ✅ Name correct + dir auto -->
+                  <div class="metaRow"><span class="dot">•</span> Name: <span class="metaVal" dir="auto">${escapeHtml(r.name)}</span></div>
+
+                  <!-- ✅ Email same style as name (no mono) -->
+                  <div class="metaRow"><span class="dot">•</span> Email: <span class="metaVal" dir="auto">${escapeHtml(r.email)}</span></div>
+
+                  <div class="metaRow"><span class="dot">•</span> Phone: <span class="metaVal mono" dir="auto">${escapeHtml(r.phone)}</span></div>
                 </div>
               </div>
 
@@ -713,7 +752,7 @@
             </div>
 
             <div class="descLabel">Description:</div>
-            <div class="descBox">${escapeHtml(r.description)}</div>
+            <div class="descBox" dir="auto">${escapeHtml(r.description)}</div>
 
             <div class="idLine">
               <span>ID:</span>
@@ -739,7 +778,7 @@
               <button class="btnSmall btnSmall--ok" data-act="saveNote">Save note</button>
             </div>
 
-            <div class="thinLine">Updated: <span class="mono">${escapeHtml(fmtDate(r.updated_at))}</span></div>
+            <div class="thinLine">Updated: <span class="metaVal" dir="auto">${escapeHtml(r.updated_at ? (fmtDateOnly(r.updated_at) + " " + fmtTimeOnly(r.updated_at)) : "—")}</span></div>
           </div>
         `;
       }).join("");
@@ -753,7 +792,6 @@
           btn.addEventListener("click", async () => {
             const act = btn.getAttribute("data-act");
 
-            // find row
             const row = list.find(x => String(x.id) === String(id));
             const email = row?.email ?? "";
             const phone = row?.phone ?? "";
@@ -790,7 +828,7 @@
               let status = "new";
               if (act === "setProgress") status = "in_progress";
               if (act === "setResolved") status = "closed";
-              if (act === "archive") status = "closed"; // archive = closed (UI mapping)
+              if (act === "archive") status = "closed";
 
               const { error } = await supabase.from("reports").update({
                 status,
@@ -824,17 +862,12 @@
         topbar.style.display = "flex";
         loginView.style.display = "none";
         dashView.style.display = "block";
-
-        // فعّل realtime
         subscribeRealtime();
-
         await renderReports();
       } else {
         topbar.style.display = "none";
         dashView.style.display = "none";
         loginView.style.display = "grid";
-
-        // سكّر realtime
         unsubscribeRealtime();
       }
     }
@@ -845,7 +878,7 @@
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
 
-      // مهم: هذا تفاعل من المستخدم، نفك قفل الصوت هنا كمان
+      // unlock sound (browser policy)
       ensureAudioUnlocked();
 
       const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -878,15 +911,12 @@
       window.__srchT = setTimeout(renderReports, 250);
     });
 
-    // Sound toggle + unlock + test beep
+    // Sound toggle + test
     soundBtn.addEventListener("click", () => {
       soundOn = !soundOn;
-
-      // مهم: المتصفح ما يسمح بالصوت إلا بعد تفاعل
       ensureAudioUnlocked();
-
       soundBtn.textContent = "Sound: " + (soundOn ? "On" : "Off");
-      if (soundOn) playBeep(); // اختبار
+      if (soundOn) playBeep();
     });
 
     await checkSession();
