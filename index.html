@@ -353,7 +353,6 @@
 
     .thinLine{opacity:.55;font-size:12.5px}
 
-    /* Responsive */
     @media (max-width: 1100px){
       .stats{grid-template-columns: repeat(2, 1fr)}
       .grid{grid-template-columns: repeat(2, 1fr)}
@@ -369,8 +368,8 @@
 </head>
 
 <body>
-  <!-- DASHBOARD TOPBAR (hidden until logged in) -->
   <div class="shell">
+    <!-- TOP BAR -->
     <div id="topbar" class="topbar glass" style="display:none;">
       <div class="brand">
         <div class="brandIcon"></div>
@@ -402,7 +401,6 @@
           <div class="label">Email</div>
           <div class="inputShell">
             <div class="ico" aria-hidden="true">
-              <!-- @ icon -->
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                 <path d="M12 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="rgba(231,237,247,.9)" stroke-width="2"/>
                 <path d="M19.5 12c0 4.14-3.36 7.5-7.5 7.5S4.5 16.14 4.5 12 7.86 4.5 12 4.5c3.44 0 6.35 2.34 7.22 5.5.42 1.55-.71 2.5-2.22 2.5H15a2 2 0 0 1-2-2V8" stroke="rgba(231,237,247,.9)" stroke-width="2" stroke-linecap="round"/>
@@ -416,7 +414,6 @@
           <div class="label">Password</div>
           <div class="inputShell">
             <div class="ico" aria-hidden="true">
-              <!-- lock icon -->
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                 <path d="M7 11V8a5 5 0 0 1 10 0v3" stroke="rgba(231,237,247,.9)" stroke-width="2" stroke-linecap="round"/>
                 <path d="M6.5 11h11A2.5 2.5 0 0 1 20 13.5v5A2.5 2.5 0 0 1 17.5 21h-11A2.5 2.5 0 0 1 4 18.5v-5A2.5 2.5 0 0 1 6.5 11Z" stroke="rgba(231,237,247,.9)" stroke-width="2"/>
@@ -435,7 +432,7 @@
 
     <!-- DASHBOARD VIEW -->
     <div id="dashView" style="display:none;">
-      <div class="stats" id="statsRow">
+      <div class="stats">
         <div class="stat">
           <div class="k">Total Reports</div>
           <div class="v" id="stTotal">0</div>
@@ -461,7 +458,6 @@
       <div class="controls">
         <div class="search">
           <div class="ico" aria-hidden="true" style="opacity:.7">
-            <!-- search icon -->
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="rgba(231,237,247,.9)" stroke-width="2"/>
               <path d="M16.5 16.5 21 21" stroke="rgba(231,237,247,.9)" stroke-width="2" stroke-linecap="round"/>
@@ -518,6 +514,66 @@
     const soundBtn = document.getElementById("soundBtn");
     let soundOn = true;
 
+    // ===== SOUND (REAL) =====
+    let audioCtx = null;
+    let lastSeenCreatedAt = null;
+    let realtimeChannel = null;
+
+    function ensureAudioUnlocked(){
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+    }
+
+    function playBeep(){
+      if (!soundOn) return;
+
+      // لازم يكون فيه تفاعل من المستخدم أول مرة (مثل ضغط Sound أو Sign in)
+      ensureAudioUnlocked();
+
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+
+      o.type = "sine";
+      o.frequency.value = 880;
+
+      const now = audioCtx.currentTime;
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(0.18, now + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+
+      o.connect(g);
+      g.connect(audioCtx.destination);
+
+      o.start(now);
+      o.stop(now + 0.2);
+    }
+
+    function subscribeRealtime(){
+      if (realtimeChannel) return;
+
+      realtimeChannel = supabase
+        .channel("reports-live")
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "reports" },
+          async () => {
+            playBeep();
+            await renderReports();
+          }
+        )
+        .subscribe((status) => {
+          // optional: console.log("Realtime status:", status);
+        });
+    }
+
+    function unsubscribeRealtime(){
+      if (!realtimeChannel) return;
+      supabase.removeChannel(realtimeChannel);
+      realtimeChannel = null;
+    }
+
+    // ========================
+
     function escapeHtml(str){
       return String(str ?? "").replace(/[&<>"']/g, m => ({
         "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
@@ -540,7 +596,6 @@
     }
 
     function severityInfo(v){
-      // support common values: low/medium/high OR Arabic words
       const val = (v ?? "").toString().toLowerCase();
       if (val.includes("high") || val.includes("عالي")) return { cls:"pill--high" };
       if (val.includes("med") || val.includes("متوسط")) return { cls:"pill--med" };
@@ -549,7 +604,6 @@
     }
 
     function inferDupCount(r){
-      // حاولنا ندعم أكثر من اسم عمود بدون ما نكسر لو مش موجود
       const n =
         r.potential_dup_count ??
         r.dup_count ??
@@ -559,13 +613,11 @@
 
       if (Number.isFinite(n) && n > 0) return n;
 
-      // fallback flags
       if (r.is_potential_duplicate || r.potential_dup || r.duplicate_of || r.dup_group_id) return 1;
       return 0;
     }
 
     async function getAllForStats(){
-      // نجيب عدد بسيط للعرض (لو عندك آلاف سجلات، ممكن تعمل endpoints خاصة)
       const { data, error } = await supabase
         .from("reports")
         .select("*")
@@ -596,7 +648,15 @@
       stDup.textContent = dupCount;
       stLatest.textContent = latest;
 
-      // Apply filters (client-side) to match UI (مثل الصورة)
+      // Beep على Refresh لو فيه بلاغ أحدث من آخر مرة
+      if (all[0]?.created_at) {
+        if (lastSeenCreatedAt && new Date(all[0].created_at) > new Date(lastSeenCreatedAt)) {
+          playBeep();
+        }
+        lastSeenCreatedAt = all[0].created_at;
+      }
+
+      // Filters
       let list = [...all];
 
       const st = filterStatus.value;
@@ -606,7 +666,8 @@
       if (term){
         list = list.filter(r => {
           const blob = [
-            r.name, r.email, r.phone, r.type, r.severity, r.status, r.description, r.admin_note
+            r.name, r.email, r.phone, r.type, r.severity, r.status, r.description, r.admin_note,
+            r.threat, r.threat_title
           ].map(x => (x ?? "").toString().toLowerCase()).join(" | ");
           return blob.includes(term);
         });
@@ -692,6 +753,7 @@
           btn.addEventListener("click", async () => {
             const act = btn.getAttribute("data-act");
 
+            // find row
             const row = list.find(x => String(x.id) === String(id));
             const email = row?.email ?? "";
             const phone = row?.phone ?? "";
@@ -728,7 +790,7 @@
               let status = "new";
               if (act === "setProgress") status = "in_progress";
               if (act === "setResolved") status = "closed";
-              if (act === "archive") status = "closed"; // (تصميم فقط) اعتبرنا الأرشفة = إغلاق
+              if (act === "archive") status = "closed"; // archive = closed (UI mapping)
 
               const { error } = await supabase.from("reports").update({
                 status,
@@ -759,16 +821,21 @@
       const session = data?.session;
 
       if (session){
-        // show dashboard
         topbar.style.display = "flex";
         loginView.style.display = "none";
         dashView.style.display = "block";
+
+        // فعّل realtime
+        subscribeRealtime();
+
         await renderReports();
-      }else{
-        // show login
+      } else {
         topbar.style.display = "none";
         dashView.style.display = "none";
         loginView.style.display = "grid";
+
+        // سكّر realtime
+        unsubscribeRealtime();
       }
     }
 
@@ -777,6 +844,9 @@
       authMsg.textContent = "";
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
+
+      // مهم: هذا تفاعل من المستخدم، نفك قفل الصوت هنا كمان
+      ensureAudioUnlocked();
 
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) authMsg.textContent = "Error: " + error.message;
@@ -797,22 +867,26 @@
       await checkSession();
     });
 
-    // Top refresh
+    // Refresh
     refreshBtnTop.addEventListener("click", renderReports);
 
     // Filters
     filterStatus.addEventListener("change", renderReports);
     sortBy.addEventListener("change", renderReports);
     searchInput.addEventListener("input", () => {
-      // smooth UX without spamming
       clearTimeout(window.__srchT);
       window.__srchT = setTimeout(renderReports, 250);
     });
 
-    // Sound toggle (UI only)
+    // Sound toggle + unlock + test beep
     soundBtn.addEventListener("click", () => {
       soundOn = !soundOn;
+
+      // مهم: المتصفح ما يسمح بالصوت إلا بعد تفاعل
+      ensureAudioUnlocked();
+
       soundBtn.textContent = "Sound: " + (soundOn ? "On" : "Off");
+      if (soundOn) playBeep(); // اختبار
     });
 
     await checkSession();
